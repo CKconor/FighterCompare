@@ -2,11 +2,18 @@ var express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
 const port = 3000;
-
-
+var mongoose = require("mongoose");
+mongoose.connect("mongodb://localhost:27017/fightercompare", {useNewUrlParser: true});
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.set("view engine", "ejs");
+
+var fighterSchema = new mongoose.Schema({
+    name: String,
+    image: String
+});
+
+var Fighter = mongoose.model("Fighter", fighterSchema);
 
 var fighters = [
     {name: "Tyron Woodley", image: "https://img.favpng.com/1/7/8/tyron-woodley-ufc-214-cormier-vs-jones-2-welterweight-light-heavyweight-bantamweight-png-favpng-YSASNBZw0LctxsGYXMk9UUUCD_t.jpg"},
@@ -19,10 +26,15 @@ app.get("/", function(req, res){
     res.render("landing");
 });
 
+//find fighters from DB
 app.get("/fighters", function(req, res){
-    
-
-    res.render("fighters",{fighters:fighters});
+    Fighter.find({}, function(err, allFighters){
+        if(err){
+            console.log(err);
+        } else {
+            res.render("fighters",{fighters:allFighters});
+        }
+    });
 });
 
 app.post("/fighters", function(req, res){
@@ -30,10 +42,16 @@ app.post("/fighters", function(req, res){
     var name = req.body.name;
     var image = req.body.image;
     var newFighter = {name: name, image: image}
-    fighters.push(newFighter);
-    //redirect back to campground
-    res.redirect("/fighters");
-});
+    //create a new fighter and save to DB
+    Fighter.create(newFighter, function(err, newlyCreated){
+            if(err){
+                console.log(err);
+            } else {
+                //redirect back to Fighter Page
+                res.redirect("/fighters");
+            }
+        });
+    });
 
 app.get("/fighters/new", function(req, res){
     res.render("new.ejs");
