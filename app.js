@@ -10,7 +10,8 @@ app.set("view engine", "ejs");
 
 var fighterSchema = new mongoose.Schema({
     name: String,
-    image: String
+    image: String,
+    description: String,
 });
 
 var Fighter = mongoose.model("Fighter", fighterSchema);
@@ -32,16 +33,18 @@ app.get("/fighters", function(req, res){
         if(err){
             console.log(err);
         } else {
-            res.render("fighters",{fighters:allFighters});
+            res.render("index",{fighters:allFighters});
         }
     });
 });
 
 app.post("/fighters", function(req, res){
-    //get form data and add to array
+    //get data from form
     var name = req.body.name;
     var image = req.body.image;
-    var newFighter = {name: name, image: image}
+    var description = req.body.description;
+    //get form data and add to array
+    var newFighter = {name: name, image: image, description:description}
     //create a new fighter and save to DB
     Fighter.create(newFighter, function(err, newlyCreated){
             if(err){
@@ -52,10 +55,22 @@ app.post("/fighters", function(req, res){
             }
         });
     });
-
+// Show form to add new fighter
 app.get("/fighters/new", function(req, res){
     res.render("new.ejs");
 });
+
+// Show selected fighter
+app.get("/fighters/:id", function(req, res){
+    //find fighter with ID
+    Fighter.findById(req.params.id, function(err, foundFighter){
+        if(err){
+            console.log(err);
+        } else {
+            res.render("show", {fighter: foundFighter});
+        }
+    });
+});   
 
 app.listen(port, function(){
     console.log("Server Started")
